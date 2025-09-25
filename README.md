@@ -177,7 +177,7 @@ Secrets nécessaires dans GitHub :
 - Capture des pages webs qui fonctionnent
 
   ```md
-  ![Page fonctionnelle](screenshots/page-fonctionnelle.png)
+  ![Page fonctionnelle](screenshots/page-fonctionnelle.png "test")
   ```
 
   ```md
