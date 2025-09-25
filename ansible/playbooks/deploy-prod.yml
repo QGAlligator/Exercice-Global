@@ -4,4 +4,4 @@
     repo_url: "https://github.com/QGAlligator/Exercice-Global.git"
     repo_branch: "main"
   roles:
-    - role: app
+    - role: ../roles/app
