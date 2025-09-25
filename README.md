@@ -44,7 +44,6 @@ Voici les principaux éléments :
 - Branches :
   - `main` → production
   - `dev` → préproduction / test
-  - `feature/*` → développement de nouvelles fonctionnalités
 
 ---
 
@@ -157,6 +156,7 @@ Le workflow `.github/workflows/pipeline.yml` doit :
 
 Secrets nécessaires dans GitHub :
 
+- `AWS_SSH_KEY` → clé privée pour accéder au serveur où il y a les conteneurs
 - `DEV_SSH_KEY` → clé privée pour accéder au serveur dev
 - `PROD_SSH_KEY` → clé privée pour accéder au serveur prod
 
