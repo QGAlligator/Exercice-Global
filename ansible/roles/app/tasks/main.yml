@@ -65,11 +65,34 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Check nginx service status
+  command: systemctl status nginx
+  register: nginx_status
+  failed_when: false
+  changed_when: false
+
+- name: Debug nginx status
+  debug:
+    var: nginx_status
+
+- name: Start nginx if not running
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+  when: nginx_status.rc != 0
+
 - name: Restart nginx
-  service:
+  systemd:
     name: nginx
     state: restarted
     enabled: yes
+  when: nginx_status.rc == 0
 
 - name: Create a deployment log
   copy:
