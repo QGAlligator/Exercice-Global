@@ -70,29 +70,49 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 
-- name: Check nginx service status
-  command: systemctl status nginx
-  register: nginx_status
-  failed_when: false
+- name: Check nginx configuration syntax
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+  failed_when: nginx_test.rc != 0
+
+- name: Check if nginx is running
+  shell: ps aux | grep nginx | grep -v grep || echo "not running"
+  register: nginx_process
+  changed_when: false
+
+- name: Stop nginx if running (Docker way)
+  shell: |
+    pkill nginx || true
+    sleep 2
+  when: "'nginx' in nginx_process.stdout"
+  changed_when: false
+
+- name: Start nginx (Docker way)
+  shell: |
+    nginx -c /etc/nginx/nginx.conf
+    sleep 2
+  register: nginx_start
+  failed_when: nginx_start.rc != 0
+
+- name: Verify nginx started successfully
+  shell: |
+    curl -s -o /dev/null -w "%{http_code}" http://localhost || echo "failed"
+  register: nginx_check
   changed_when: false
 
 - name: Debug nginx status
   debug:
-    var: nginx_status
+    msg: "Nginx HTTP status: {{ nginx_check.stdout }}"
 
-- name: Start nginx if not running
-  systemd:
-    name: nginx
-    state: started
-    enabled: yes
-  when: nginx_status.rc != 0
+- name: Final nginx process check
+  shell: ps aux | grep nginx | grep -v grep
+  register: final_nginx_status
+  changed_when: false
 
-- name: Restart nginx
-  systemd:
-    name: nginx
-    state: restarted
-    enabled: yes
-  when: nginx_status.rc == 0
+- name: Show final nginx status
+  debug:
+    var: final_nginx_status.stdout
 
 - name: Create a deployment log
   copy:
