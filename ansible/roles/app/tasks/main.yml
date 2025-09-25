@@ -35,6 +35,7 @@
     rm -rf /var/www/mini-app || true
     mkdir -p /var/www/mini-app
     cp -r /opt/mini-app/public/* /var/www/mini-app/
+  become: yes
 
 - name: Ensure nginx config present
   template:
@@ -64,5 +65,4 @@
     content: "Deployed by Ansible on {{ ansible_date_time.date }} branch {{ repo_branch }}\n"
     dest: /var/log/mini-app-deploy.log
     owner: root
-    group: root
     mode: "0644"
