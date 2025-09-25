@@ -1,7 +1,7 @@
 - hosts: dev
   become: yes
   vars:
-    repo_url: "https://github.com/your-org/your-repo.git"
+    repo_url: "https://github.com/QGAlligator/Exercice-Global.git"
     repo_branch: "dev"
   roles:
     - role: app
