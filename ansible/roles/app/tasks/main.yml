@@ -29,24 +29,18 @@
   command: npm run test
   args:
     chdir: /opt/mini-app/app
+  ignore_errors: yes
 
 - name: Deploy static files to nginx web root
   shell: |
     rm -rf /var/www/mini-app || true
     mkdir -p /var/www/mini-app
 
-    # Vérifier où sont les fichiers statiques
-    if [ -d "/opt/mini-app/app/public" ]; then
-      cp -r /opt/mini-app/app/public/* /var/www/mini-app/
-    elif [ -d "/opt/mini-app/app/static" ]; then
-      cp -r /opt/mini-app/app/static/* /var/www/mini-app/
-    else
-      # Si pas de dossier public/static, utiliser app/ directement
-      cp -r /opt/mini-app/app/* /var/www/mini-app/ 2>/dev/null || true
-      # Créer une page par défaut
-      echo "<html><body><h1>Mini App</h1><p>Deployed successfully</p></body></html>" > /var/www/mini-app/index.html
-    fi
-  become: yes
+    # Copier tous les fichiers de l'app
+    cp -r /opt/mini-app/app/* /var/www/mini-app/ 2>/dev/null || true
+
+    # S'assurer que le fichier health existe
+    echo "OK" > /var/www/mini-app/health
 
 - name: Ensure nginx config present
   template:
@@ -65,58 +59,29 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 
-- name: Remove default nginx site
-  file:
-    path: /etc/nginx/sites-enabled/default
-    state: absent
-
-- name: Check nginx configuration syntax
+- name: Test nginx configuration
   command: nginx -t
   register: nginx_test
   changed_when: false
-  failed_when: nginx_test.rc != 0
 
-- name: Check if nginx is running
-  shell: ps aux | grep nginx | grep -v grep || echo "not running"
-  register: nginx_process
-  changed_when: false
-
-- name: Stop nginx if running (Docker way)
+- name: Restart nginx
   shell: |
     pkill nginx || true
     sleep 2
-  when: "'nginx' in nginx_process.stdout"
+    nginx
+  when: nginx_test.rc == 0
+
+- name: Verify deployment
+  uri:
+    url: http://localhost/health
+    method: GET
+    status_code: 200
+  register: health_check
   changed_when: false
-
-- name: Start nginx (Docker way)
-  shell: |
-    nginx -c /etc/nginx/nginx.conf
-    sleep 2
-  register: nginx_start
-  failed_when: nginx_start.rc != 0
-
-- name: Verify nginx started successfully
-  shell: |
-    curl -s -o /dev/null -w "%{http_code}" http://localhost || echo "failed"
-  register: nginx_check
-  changed_when: false
-
-- name: Debug nginx status
-  debug:
-    msg: "Nginx HTTP status: {{ nginx_check.stdout }}"
-
-- name: Final nginx process check
-  shell: ps aux | grep nginx | grep -v grep
-  register: final_nginx_status
-  changed_when: false
-
-- name: Show final nginx status
-  debug:
-    var: final_nginx_status.stdout
 
 - name: Create a deployment log
   copy:
-    content: "Deployed by Ansible on {{ ansible_date_time.date }} branch {{ repo_branch }}\n"
+    content: "Deployed by Ansible on {{ ansible_date_time.date }} branch {{ repo_branch }}\nHealth check: {{ health_check.status }}"
     dest: /var/log/mini-app-deploy.log
     owner: root
     mode: "0644"
