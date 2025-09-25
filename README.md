@@ -176,13 +176,10 @@ Secrets nécessaires dans GitHub :
 
 - Capture des pages webs qui fonctionnent
 
-  ![Page fonctionnelle](screenshots/page-fonctionnelle.png)
+  ![Page fonctionnelle](screenshots/page-fonctionnelle.png "Déployé en Prod (Port 8080)")
 
-  ```md
-  ![Page fonctionnelle](screenshots/page-fonctionnelle2.png)
-  ```
+  ![Page fonctionnelle](screenshots/page-fonctionnelle2.png "Déployé en Dev (Port 8081)")
 
 - Capture du workflow GitHub Actions (succès)
-  ```md
-  ![Workflow CI/CD](screenshots/workflow-success.png)
-  ```
+
+  ![Workflow CI/CD](screenshots/workflow-success.png "Onglet Actions du Repo GitHub")
