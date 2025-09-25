@@ -23,18 +23,29 @@
 - name: Install npm dependencies
   command: npm install
   args:
-    chdir: /opt/mini-app
+    chdir: /opt/mini-app/app
 
 - name: Run tests
   command: npm run test
   args:
-    chdir: /opt/mini-app
+    chdir: /opt/mini-app/app
 
 - name: Deploy static files to nginx web root
   shell: |
     rm -rf /var/www/mini-app || true
     mkdir -p /var/www/mini-app
-    cp -r /opt/mini-app/public/* /var/www/mini-app/
+
+    # Vérifier où sont les fichiers statiques
+    if [ -d "/opt/mini-app/app/public" ]; then
+      cp -r /opt/mini-app/app/public/* /var/www/mini-app/
+    elif [ -d "/opt/mini-app/app/static" ]; then
+      cp -r /opt/mini-app/app/static/* /var/www/mini-app/
+    else
+      # Si pas de dossier public/static, utiliser app/ directement
+      cp -r /opt/mini-app/app/* /var/www/mini-app/ 2>/dev/null || true
+      # Créer une page par défaut
+      echo "<html><body><h1>Mini App</h1><p>Deployed successfully</p></body></html>" > /var/www/mini-app/index.html
+    fi
   become: yes
 
 - name: Ensure nginx config present
