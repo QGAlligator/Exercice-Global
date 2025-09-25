@@ -1,5 +1,5 @@
 ---
-- name: Ensure packages are installed
+- name: Ensure required packages are installed
   apt:
     name: ["git", "nodejs", "npm", "nginx"]
     state: present
@@ -9,17 +9,17 @@
   file:
     path: /opt/mini-app
     state: directory
-    owner: root
+    owner: ubuntu
     mode: "0755"
 
-- name: Clone repository (force latest from branch)
+- name: Clone repository
   git:
     repo: "{{ repo_url }}"
     dest: /opt/mini-app
     version: "{{ repo_branch }}"
     force: yes
 
-- name: Install npm deps
+- name: Install npm dependencies
   command: npm install
   args:
     chdir: /opt/mini-app
@@ -29,7 +29,7 @@
   args:
     chdir: /opt/mini-app
 
-- name: Copy app to web dir
+- name: Deploy static files to nginx web root
   shell: |
     rm -rf /var/www/mini-app || true
     mkdir -p /var/www/mini-app
@@ -62,5 +62,5 @@
   copy:
     content: "Deployed by Ansible on {{ ansible_date_time.date }} branch {{ repo_branch }}\n"
     dest: /var/log/mini-app-deploy.log
-    owner: root
+    owner: ubuntu
     mode: "0644"

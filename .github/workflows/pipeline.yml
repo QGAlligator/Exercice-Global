@@ -40,24 +40,22 @@ jobs:
           echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/ansible/id_rsa_prod
           chmod 600 ~/.ssh/ansible/*
 
+          mkdir -p ansible/keys
+          cp ~/.ssh/ansible/id_rsa_dev ansible/keys/id_rsa_dev
+          cp ~/.ssh/ansible/id_rsa_prod ansible/keys/id_rsa_prod
+
       - name: Install Ansible
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install ansible
 
-      - name: Copy keys into ansible dir
-        run: |
-          mkdir -p ansible/keys
-          cp ~/.ssh/ansible/id_rsa_dev ansible/keys/id_rsa_dev
-          cp ~/.ssh/ansible/id_rsa_prod ansible/keys/id_rsa_prod
-
-      - name: Run Ansible deploy (dev)
+      - name: Deploy to Dev
         if: github.ref == 'refs/heads/dev'
         run: |
-          ansible-playbook -i ansible/inventory/dev.ini ansible/playbooks/deploy-dev.yml --private-key=ansible/keys/id_rsa_dev
+          ansible-playbook -i ansible/inventory/dev.ini ansible/playbooks/deploy-dev.yml
 
-      - name: Run Ansible deploy (prod)
+      - name: Deploy to Prod
         if: github.ref == 'refs/heads/main'
         run: |
-          ansible-playbook -i ansible/inventory/prod.ini ansible/playbooks/deploy-prod.yml --private-key=ansible/keys/id_rsa_prod
+          ansible-playbook -i ansible/inventory/prod.ini ansible/playbooks/deploy-prod.yml
