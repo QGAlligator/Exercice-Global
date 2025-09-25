@@ -1,0 +1,66 @@
+---
+- name: Ensure packages are installed
+  apt:
+    name: ["git", "nodejs", "npm", "nginx"]
+    state: present
+    update_cache: yes
+
+- name: Ensure app directory exists
+  file:
+    path: /opt/mini-app
+    state: directory
+    owner: root
+    mode: "0755"
+
+- name: Clone repository (force latest from branch)
+  git:
+    repo: "{{ repo_url }}"
+    dest: /opt/mini-app
+    version: "{{ repo_branch }}"
+    force: yes
+
+- name: Install npm deps
+  command: npm install
+  args:
+    chdir: /opt/mini-app
+
+- name: Run tests
+  command: npm run test
+  args:
+    chdir: /opt/mini-app
+
+- name: Copy app to web dir
+  shell: |
+    rm -rf /var/www/mini-app || true
+    mkdir -p /var/www/mini-app
+    cp -r /opt/mini-app/public/* /var/www/mini-app/
+
+- name: Ensure nginx config present
+  template:
+    src: nginx_app.conf.j2
+    dest: /etc/nginx/sites-available/mini-app
+    mode: "0644"
+
+- name: Enable nginx site
+  file:
+    src: /etc/nginx/sites-available/mini-app
+    dest: /etc/nginx/sites-enabled/mini-app
+    state: link
+
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: Create a deployment log
+  copy:
+    content: "Deployed by Ansible on {{ ansible_date_time.date }} branch {{ repo_branch }}\n"
+    dest: /var/log/mini-app-deploy.log
+    owner: root
+    mode: "0644"
